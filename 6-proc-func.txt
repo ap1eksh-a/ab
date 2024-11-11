@@ -1,0 +1,99 @@
+CREATE TABLE Employee (
+    emp_id INT PRIMARY KEY,
+    dept_id INT,
+    emp_name VARCHAR(100),
+    DoJ DATE, -- Date of Joining
+    salary DECIMAL(10, 2),
+    commission DECIMAL(5, 2) DEFAULT 0.00,
+    job_title VARCHAR(100)
+);
+
+
+INSERT INTO Employee (emp_id, dept_id, emp_name, DoJ, salary, job_title)
+VALUES
+(1, 101, 'John Doe', '2015-08-15', 15000, 'Manager'),
+(2, 102, 'Jane Smith', '2010-06-10', 9000, 'Developer'),
+(3, 103, 'Emily Davis', '2017-12-01', 2500, 'Intern'),
+(4, 101, 'Michael Brown', '2008-09-30', 12000, 'Team Lead');
+
+
+
+DELIMITER //
+
+CREATE PROCEDURE RecordCommission()
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE emp_id INT;
+    DECLARE emp_salary DECIMAL(10, 2);
+    DECLARE emp_experience INT;
+    DECLARE emp_commission DECIMAL(5, 2);
+
+    -- Declare a cursor to loop over each employee
+    DECLARE emp_cursor CURSOR FOR
+    SELECT emp_id, salary, DATEDIFF(CURDATE(), DoJ) / 365
+    FROM Employee;
+
+    -- Declare a handler for when the cursor finishes
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    -- Open the cursor
+    OPEN emp_cursor;
+
+    -- Loop through each employee
+    emp_loop: LOOP
+        FETCH emp_cursor INTO emp_id, emp_salary, emp_experience;
+
+        IF done THEN
+            LEAVE emp_loop;
+        END IF;
+
+        -- Apply commission logic based on the conditions
+        IF emp_salary > 10000 THEN
+            SET emp_commission = 0.004 * emp_salary;
+        ELSEIF emp_salary < 3000 THEN
+            SET emp_commission = 0.0025 * emp_salary;
+        ELSEIF emp_experience > 10 THEN
+            SET emp_commission = 0.0035 * emp_salary;
+        ELSE
+            SET emp_commission = 0.0015 * emp_salary;
+        END IF;
+
+        -- Debug: Output the commission calculation
+        SELECT emp_id, emp_salary, emp_experience, emp_commission;
+
+        -- Update the commission in the employee record
+        UPDATE Employee
+        SET commission = emp_commission
+        WHERE emp_id = emp_id;
+    END LOOP;
+
+    -- Close the cursor
+    CLOSE emp_cursor;
+END //
+
+DELIMITER ;
+
+CALL RecordCommission();
+
+
+DELIMITER //
+
+CREATE FUNCTION GetDepartmentManager(dept_id INT)
+RETURNS VARCHAR(100)
+DETERMINISTIC
+BEGIN
+    DECLARE manager_name VARCHAR(100);
+
+    -- Query to find the manager of the given department
+    SELECT emp_name
+    INTO manager_name
+    FROM Employee
+    WHERE dept_id = dept_id AND job_title = 'Manager'
+    LIMIT 1;
+
+    RETURN manager_name;
+END //
+
+DELIMITER ;
+
+SELECT GetDepartmentManager(101);
