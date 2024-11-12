@@ -1,0 +1,58 @@
+use myDatabase;
+
+db.createCollection("Student_Data");
+
+db.Student_Data.insertMany([
+  { Student_ID: 1, Student_Name: "Alice", Department: "Computer Science", Marks: 85 },
+  { Student_ID: 2, Student_Name: "Bob", Department: "Mechanical", Marks: 90 },
+  { Student_ID: 3, Student_Name: "Charlie", Department: "Electrical", Marks: 78 },
+  { Student_ID: 4, Student_Name: "David", Department: "Computer Science", Marks: 92 },
+  { Student_ID: 5, Student_Name: "Eve", Department: "Mechanical", Marks: 88 },
+  { Student_ID: 6, Student_Name: "Frank", Department: "Electrical", Marks: 80 },
+  { Student_ID: 7, Student_Name: "Grace", Department: "Computer Science", Marks: 89 },
+  { Student_ID: 8, Student_Name: "Hank", Department: "Mechanical", Marks: 95 },
+  { Student_ID: 9, Student_Name: "Ivy", Department: "Electrical", Marks: 85 },
+  { Student_ID: 10, Student_Name: "Jack", Department: "Computer Science", Marks: 76 }
+]);
+2. Display all Students Based on their Departments with Average Marks of Each Department
+Use the $group stage to group by Department and calculate the average marks.
+
+javascript
+Copy code
+db.Student_Data.aggregate([
+  { $group: { _id: "$Department", students: { $push: "$Student_Name" }, averageMarks: { $avg: "$Marks" } } }
+]);
+3. Display the Number of Students in Each Department
+Use the $group stage to group by Department and count students in each department.
+
+javascript
+Copy code
+db.Student_Data.aggregate([
+  { $group: { _id: "$Department", studentCount: { $sum: 1 } } }
+]);
+4. Display List of Students with the Highest Marks in Each Department in Descending Order of Marks
+Use the $sort stage to order by Marks and $group to keep only the highest mark for each department.
+
+javascript
+Copy code
+db.Student_Data.aggregate([
+  { $sort: { Department: 1, Marks: -1 } },
+  { $group: { _id: "$Department", topStudent: { $first: "$Student_Name" }, highestMarks: { $first: "$Marks" } } },
+  { $sort: { highestMarks: -1 } }
+]);
+5. Create an Index on the Student_ID Field
+javascript
+Copy code
+db.Student_Data.createIndex({ Student_ID: 1 });
+6. Create an Index on the Student_Name and Department Fields
+javascript
+Copy code
+db.Student_Data.createIndex({ Student_Name: 1, Department: 1 });
+7. Drop the Index on the Student_ID Field
+javascript
+Copy code
+db.Student_Data.dropIndex("Student_ID_1");
+8. Drop the Index on the Student_Name and Department Fields
+javascript
+Copy code
+db.Student_Data.dropIndex("Student_Name_1_Department_1");
